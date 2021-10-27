@@ -187,12 +187,12 @@
 									"basic": [
 										{
 											"key": "password",
-											"value": "{{client_secret}}",
+											"value": "{{confidentialClientSecret}}",
 											"type": "string"
 										},
 										{
 											"key": "username",
-											"value": "{{client_id}}",
+											"value": "{{confidentialClientId}}",
 											"type": "string"
 										}
 									]
