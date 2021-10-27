@@ -1,0 +1,716 @@
+{
+	"info": {
+		"_postman_id": "f310a492-27e0-496a-a770-152b231b66fc",
+		"name": "Access Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Test Cases",
+			"item": [
+				{
+					"name": "Requisites",
+					"item": [
+						{
+							"name": "Get OIDC Configuration (well-known/openid-configuration)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"",
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Status code is 200\"] = responseCode.code === 200;",
+											"",
+											"tests[\"The registration endpoint is not empty\"] = jsonData.registration_endpoint !== \"\"",
+											"",
+											"pm.globals.set(\"registrationEndpoint\", jsonData.registration_endpoint);",
+											"",
+											"tests[\"The token endpoint is not empty\"] = jsonData.token_endpoint !== \"\"",
+											"",
+											"pm.globals.set(\"tokenEndpoint\", jsonData.token_endpoint);",
+											"",
+											"tests[\"The user info endpoint is not empty\"] = jsonData.userinfo_endpoint !== \"\"",
+											"",
+											"pm.globals.set(\"userinfoEndpoint\",  jsonData.userinfo_endpoint);",
+											"",
+											"tests[\"The introspection info endpoint is not empty\"] = jsonData.userinfo_endpoint !== \"\"",
+											"",
+											"pm.globals.set(\"introspectionEndpoint\",  jsonData.introspection_endpoint);",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{amURI}}/.well-known/openid-configuration",
+									"host": [
+										"{{amURI}}"
+									],
+									"path": [
+										".well-known",
+										"openid-configuration"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "OAuth 2.0  Resource Owner Password Credentials Grant",
+					"item": [
+						{
+							"name": "Login Success: Get Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Status code is 200\"] = responseCode.code === 200;",
+											"",
+											"tests[\"Check access token is not empty\"] = jsonData.access_token !== \"\"",
+											"",
+											"pm.globals.set(\"access_token\", jsonData.access_token);",
+											"",
+											"tests[\"Check id token is not empty\"] = jsonData.id_token !== \"\"",
+											"",
+											"pm.globals.set(\"id_token\", jsonData.id_token);",
+											"var jsonData = JSON.parse(responseBody);",
+											"let tokenData = {",
+											"    json:jsonData",
+											"};",
+											"pm.visualizer.set(amUtils.template(), tokenData);",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{confidentialClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{confidentialClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "{{demoUsername}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{demoPassword}}",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "{{confidentialClientScopes}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Introspect the Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Status code is 200\" ] = responseCode.code === 200;",
+											"",
+											"tests[\"Check token response client id is \" + pm.environment.get(\"client_id\") ] = jsonData.client_id === pm.environment.get(\"client_id\");",
+											"",
+											"tests[\"Check token response claim sub is \" + pm.environment.get(\"username\") ] = jsonData.sub === pm.environment.get(\"username\");",
+											"",
+											"tests[\"Check token response user id is \" + pm.environment.get(\"username\") ] = jsonData.user_id === pm.environment.get(\"username\");"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "text"
+										},
+										{
+											"key": "token_type_hint",
+											"value": "requesting_party_token",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{introspectionEndpoint}}",
+									"host": [
+										"{{introspectionEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request User Info",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Status code is 200\"] = responseCode.code === 200;",
+											"",
+											"tests[\"Check user info response sub claim is \" + pm.environment.get(\"username\") ] = jsonData.sub === pm.environment.get(\"username\");"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{userinfoEndpoint}}",
+									"host": [
+										"{{userinfoEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "The Resource Owner Password Credentials (ROPC) grant flow allows the client to use the resource owner's user name and password to get an access token.\n\nSince the resource owner shares their credentials with the client, this flow is deemed the most insecure of the OAuth 2.0 flows. The resource owner's credentials can potentially be leaked or abused by the client application, and the resource owner has no control over the authorization process.\n\nYou should implement the ROPC grant flow only if the resource owner has a trust relationship with the client (such as the device operating system, or a highly privileged application).",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "OAuth 2.0  Client Credentials Grant",
+					"item": [
+						{
+							"name": "Get Access Token as a Confidential Client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"if(jsonData.access_token && jsonData.access_token != \"\")",
+											"{",
+											"    pm.globals.set(\"access_token\", jsonData.access_token);",
+											"}",
+											"",
+											"if(jsonData.refresh_token && jsonData.refresh_token != \"\")",
+											"{",
+											"    pm.globals.set(\"refresh_token\", jsonData.refresh_token);",
+											"}",
+											"",
+											"// Tests",
+											"",
+											"pm.test(\"Status code is 200\", () => {",
+											"  pm.expect(pm.response.code).to.eql(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains access_token\", function () {",
+											"    pm.expect(jsonData.access_token).to.be.a(\"string\");",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{confidentialClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{confidentialClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/x-www-form-urlencoded",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"description": "The grant type required for the Client Credentials grant.",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "openid",
+											"description": "Strings that are presented to the user for approval and included in tokens so that the protected resource may make decisions about what to give access to.",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
+									]
+								},
+								"description": "Sends the confidential client credentials to the authorization server to get authenticated, and request an access token."
+							},
+							"response": [
+								{
+									"name": "Example",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/x-www-form-urlencoded",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "client_credentials",
+													"description": "The grant type required for the Client Credentials grant.",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "{{postmanConfidentialClientId}}",
+													"description": "The ID of the Confidential OAuth Client.",
+													"type": "text"
+												},
+												{
+													"key": "client_secret",
+													"value": "{{postmanClientSecret}}",
+													"description": "The secret of the Confidential OAuth Client. See the ForgeRock documentation for stronger methods of client authentication.",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "print",
+													"description": "Strings that are presented to the user for approval and included in tokens so that the protected resource may make decisions about what to give access to.",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{amUrl}}/oauth2{{realm}}/access_token",
+											"host": [
+												"{{amUrl}}"
+											],
+											"path": [
+												"oauth2{{realm}}",
+												"access_token"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "X-Frame-Options",
+											"value": "SAMEORIGIN"
+										},
+										{
+											"key": "X-Content-Type-Options",
+											"value": "nosniff"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-store"
+										},
+										{
+											"key": "Pragma",
+											"value": "no-cache"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json;charset=UTF-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "840"
+										},
+										{
+											"key": "Date",
+											"value": "Thu, 13 Aug 2020 12:17:13 GMT"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"access_token\": \"eyJ0eXAiJ9.eyJzdWIiOiJkZPXXcM\",\n    \"scope\": \"print\",\n    \"token_type\": \"Bearer\",\n    \"expires_in\": 3599\n}"
+								}
+							]
+						},
+						{
+							"name": "Introspect the Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(responseBody);",
+											"",
+											"tests[\"Status code is 200\" ] = responseCode.code === 200;",
+											"",
+											"tests[\"Check token response client id is \" + pm.environment.get(\"client_id\") ] = jsonData.client_id === pm.environment.get(\"client_id\");",
+											"",
+											"tests[\"Check token response claim sub is \" + pm.environment.get(\"username\") ] = jsonData.sub === pm.environment.get(\"username\");",
+											"",
+											"tests[\"Check token response user id is \" + pm.environment.get(\"username\") ] = jsonData.user_id === pm.environment.get(\"username\");"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{confidentialClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{confidentialClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "text"
+										},
+										{
+											"key": "token_type_hint",
+											"value": "requesting_party_token",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{introspectionEndpoint}}",
+									"host": [
+										"{{introspectionEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "The Client Credentials grant is used when a client is also the resource owner and is accessing its own data instead of acting in behalf of a user. For example, an application that needs access to a protected resource to retrieve its own data to perform a task, or update its configuration, would use the Client Credentials grant to acquire an access token.\n\nThe Client Credentials Grant flow supports confidential clients only.",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "OAuth 2.0 Resource Server (API)",
+					"item": [
+						{
+							"name": "Get Products",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"tests[\"Status code is 200\"] = responseCode.code === 200; "
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{apiUri}}",
+									"host": [
+										"{{apiUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Product",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"tests[\"Status code is 201\"] = responseCode.code === 201; "
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id\" : 20,\n    \"name\": \"Apple IPhone 8 Plus\",\n    \"description\": \"Apple IPhone 9 Plus iOS 15\"\n}"
+								},
+								"url": {
+									"raw": "{{apiUri}}",
+									"host": [
+										"{{apiUri}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"amUtils = {",
+					"    template : function (){",
+					"        return `",
+					"            <style>pre { font-size: 13px; }</style>",
+					"            <html>",
+					"                <h6>ID Token Decoded (Payload)</h6>",
+					"                <pre id=\"id_token\"></pre>",
+					"                <h6>Access token Decoded (Payload)</h6>",
+					"                <pre id=\"access_token\"></pre>",
+					"            </html>    ",
+					"            <script>",
+					"                pm.getData((err, data) => {",
+					"                document.getElementById(\"id_token\").textContent = decodeTokenPayload(data.json.id_token)",
+					"                document.getElementById(\"access_token\").textContent = decodeTokenPayload(data.json.access_token)",
+					"                });",
+					"",
+					"                function decodeTokenPayload(jwtToken)",
+					"                {",
+					"                    if(jwtToken) {",
+					"                        var token = JSON.parse(atob(jwtToken.split(\".\")[1]))",
+					"                        return JSON.stringify(token, undefined, 2); ",
+					"                    }    ",
+					"                }",
+					"",
+					"            </script>",
+					"        `;",
+					"    }",
+					"};    "
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "amURI",
+			"value": "idp_url"
+		},
+		{
+			"key": "demoUsername",
+			"value": "username"
+		},
+		{
+			"key": "demoPassword",
+			"value": "password"
+		},
+		{
+			"key": "confidentialClientId",
+			"value": "client_id"
+		},
+		{
+			"key": "confidentialClientSecret",
+			"value": "client_secret"
+		},
+		{
+			"key": "apiUri",
+			"value": "api-uri"
+		},
+		{
+			"key": "apiGatewayUri",
+			"value": "api-gateway-uri"
+		},
+		{
+			"key": "confidentialClientScopes",
+			"value": "openid"
+		}
+	]
+}
