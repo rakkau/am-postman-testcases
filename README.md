@@ -4,7 +4,7 @@ Access Manager Postman Collection for testing OAuth 2.0 use cases
 ## Configure
 1. Clone the project
 ```
-git clone https://github.com/Identicum/am-postman-testcases.git
+git clone https://github.com/Rakkau/am-postman-testcases.git
 cd am-postman-testcases
 ```
 2. Import the collection in Postman
